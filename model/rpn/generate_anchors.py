@@ -43,7 +43,7 @@ def make_anchors_by_scale(base_anchor, scales):
     w, h, x, y = get_anchor_info(base_anchor)
 
     if not isinstance(scales, np.ndarray):
-        ratios = np.array(scales)
+        scales = np.array(scales)
 
     ws = scales * w
     hs = scales * h
