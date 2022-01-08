@@ -43,9 +43,9 @@ class _ProposalLayer(nn.Module):
         bbox_delta = bbox_delta.reshape((bbox_delta.shape[0], -1, 4))
 
         anchor_center = anchor_center.reshape((anchor_center.shape[0], -1, 4))
-        proposals = torch.empty_like(bbox_delta).copy_(self.anchors_.unsqueeze(0).repeat(2, feat_h * feat_w,1))
-        proposals = proposals + anchor_center
-        proposals = clip_boxes(bbox_transform_inv(proposals, bbox_delta, batch_size), img_info, batch_size)
+        anchors = torch.empty_like(bbox_delta).copy_(self.anchors_.unsqueeze(0).repeat(2, feat_h * feat_w,1))
+        anchors = anchors + anchor_center
+        proposals = clip_boxes(bbox_transform_inv(anchors, bbox_delta, batch_size), img_info, batch_size)
         # print(proposals.shape)
 
         outputs = proposals.new_zeros((batch_size, NMS_TOP_N, 5))
@@ -54,7 +54,7 @@ class _ProposalLayer(nn.Module):
             score_single = score[i]
             keep_idx = nms(proposal_single, score[i].squeeze(-1), NMS_THRESHOLD)
 
-            if len(keep_idx) > NMS_TOP_N:
+            if NMS_TOP_N > 0 and len(keep_idx) > NMS_TOP_N:
                 keep_idx = keep_idx[:NMS_TOP_N]
 
             outputs[i,:,0] = torch.index_select(score_single, 0, keep_idx).squeeze(-1)
