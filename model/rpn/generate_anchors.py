@@ -29,10 +29,10 @@ def make_anchors_by_ratio(base_anchor, ratios, sus_size = True):
 
     if sus_size:
         ws = np.sqrt(w * h / ratios)
-        hs = ws / ratios
+        hs = ws * ratios
     else:
         ws = np.array([w for _ in range(len(ratios))])
-        hs = w / ratios
+        hs = w * ratios
 
     anchors = get_anchors_points(ws, hs, x, y)
 
