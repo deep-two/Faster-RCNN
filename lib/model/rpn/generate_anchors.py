@@ -1,113 +1,57 @@
-from __future__ import print_function
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick and Sean Bell
-# --------------------------------------------------------
-
 import numpy as np
-import pdb
 
-# Verify that we compute the same anchors as Shaoqing's matlab implementation:
-#
-#    >> load output/rpn_cachedir/faster_rcnn_VOC2007_ZF_stage1_rpn/anchors.mat
-#    >> anchors
-#
-#    anchors =
-#
-#       -83   -39   100    56
-#      -175   -87   192   104
-#      -359  -183   376   200
-#       -55   -55    72    72
-#      -119  -119   136   136
-#      -247  -247   264   264
-#       -35   -79    52    96
-#       -79  -167    96   184
-#      -167  -343   184   360
+def generate_anchors(base_size=16,  ratios=[0.5, 1, 2], scales=2**np.arange(3, 6)):
+    base = np.array([0, 0, base_size, base_size])
+    anchors = make_anchors_by_ratio(base, ratios)
+    anchors = np.vstack([make_anchors_by_scale(anchor, scales) for anchor in anchors])
 
-#array([[ -83.,  -39.,  100.,   56.],
-#       [-175.,  -87.,  192.,  104.],
-#       [-359., -183.,  376.,  200.],
-#       [ -55.,  -55.,   72.,   72.],
-#       [-119., -119.,  136.,  136.],
-#       [-247., -247.,  264.,  264.],
-#       [ -35.,  -79.,   52.,   96.],
-#       [ -79., -167.,   96.,  184.],
-#       [-167., -343.,  184.,  360.]])
+    return np.array(anchors, dtype=np.int32)
 
-try:
-    xrange          # Python 2
-except NameError:
-    xrange = range  # Python 3
+def get_anchor_info(anchor):
+    w = anchor[2] - anchor[0]
+    h = anchor[3] - anchor[1]
+    x_cen = (anchor[2] + anchor[0]) / 2
+    y_cen = (anchor[3] + anchor[1]) / 2
 
+    return w, h, x_cen, y_cen
 
-def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
-                     scales=2**np.arange(3, 6)):
-    """
-    Generate anchor (reference) windows by enumerating aspect ratios X
-    scales wrt a reference (0, 0, 15, 15) window.
-    """
+def get_anchors_points(ws, hs, x_cen, y_cen):
+    assert len(ws) == len(hs)
 
-    base_anchor = np.array([1, 1, base_size, base_size]) - 1
-    ratio_anchors = _ratio_enum(base_anchor, ratios)
-    anchors = np.vstack([_scale_enum(ratio_anchors[i, :], scales)
-                         for i in xrange(ratio_anchors.shape[0])])
+    anchors = np.stack([x_cen - ws / 2, y_cen - hs /2, x_cen + ws / 2, y_cen + hs / 2], axis=-1)
+
     return anchors
 
-def _whctrs(anchor):
-    """
-    Return width, height, x center, and y center for an anchor (window).
-    """
+def make_anchors_by_ratio(base_anchor, ratios, sus_size = True):
+    w, h, x, y = get_anchor_info(base_anchor)
+    if not isinstance(ratios, np.ndarray):
+        ratios = np.array(ratios)
 
-    w = anchor[2] - anchor[0] + 1
-    h = anchor[3] - anchor[1] + 1
-    x_ctr = anchor[0] + 0.5 * (w - 1)
-    y_ctr = anchor[1] + 0.5 * (h - 1)
-    return w, h, x_ctr, y_ctr
+    if sus_size:
+        ws = np.sqrt(w * h / ratios)
+        hs = ws * ratios
+    else:
+        ws = np.array([w for _ in range(len(ratios))])
+        hs = w * ratios
 
-def _mkanchors(ws, hs, x_ctr, y_ctr):
-    """
-    Given a vector of widths (ws) and heights (hs) around a center
-    (x_ctr, y_ctr), output a set of anchors (windows).
-    """
+    anchors = get_anchors_points(ws, hs, x, y)
 
-    ws = ws[:, np.newaxis]
-    hs = hs[:, np.newaxis]
-    anchors = np.hstack((x_ctr - 0.5 * (ws - 1),
-                         y_ctr - 0.5 * (hs - 1),
-                         x_ctr + 0.5 * (ws - 1),
-                         y_ctr + 0.5 * (hs - 1)))
     return anchors
 
-def _ratio_enum(anchor, ratios):
-    """
-    Enumerate a set of anchors for each aspect ratio wrt an anchor.
-    """
 
-    w, h, x_ctr, y_ctr = _whctrs(anchor)
-    size = w * h
-    size_ratios = size / ratios
-    ws = np.round(np.sqrt(size_ratios))
-    hs = np.round(ws * ratios)
-    anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
+def make_anchors_by_scale(base_anchor, scales):
+    w, h, x, y = get_anchor_info(base_anchor)
+
+    if not isinstance(scales, np.ndarray):
+        scales = np.array(scales)
+
+    ws = scales * w
+    hs = scales * h
+
+    anchors = get_anchors_points(ws, hs, x, y)
+
     return anchors
 
-def _scale_enum(anchor, scales):
-    """
-    Enumerate a set of anchors for each scale wrt an anchor.
-    """
 
-    w, h, x_ctr, y_ctr = _whctrs(anchor)
-    ws = w * scales
-    hs = h * scales
-    anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
-    return anchors
-
-if __name__ == '__main__':
-    import time
-    t = time.time()
-    a = generate_anchors()
-    print(time.time() - t)
-    print(a)
-    from IPython import embed; embed()
+if __name__ == "__main__":
+    print(generate_anchors())
