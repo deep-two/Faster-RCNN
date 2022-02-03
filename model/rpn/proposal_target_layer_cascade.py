@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(
     os.path.abspath(os.path.dirname(__file__))))))
 from model.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
 
+FG_FRACTION = 0.25
 FG_THRESHOLD = 0.5
 BG_THRESH_HI = 0.5
 BG_THRESH_LO = 0.1
@@ -17,8 +18,27 @@ class _ProposalTargetLayer(nn.Module):
         self.BBOX_INSIDE_WEIGHTS = torch.FloatTensor(1)
         self.num_classes = nclasses
 
-    def forward(self, rois, gt_boxes):
-        pass
+    def forward(self, rois_in, gt_boxes):
+        batch_size = gt_boxes.shape[0]
+
+        gt_rois = gt_boxes.new_zeros((gt_boxes.shape))
+        gt_rois[:,:,0] = gt_boxes[:,:,4]
+        gt_rois[:,:,1:] = gt_boxes[:,:,:4]
+        all_rois = torch.concat([rois_in, gt_rois])
+
+        rois_per_image = batch_size
+        fg_rois_per_image = int(rois_per_image * FG_FRACTION + 0.5)
+        fg_rois_per_image = 1 if fg_rois_per_image <= 0 else fg_rois_per_image
+
+        labels, rois, bbox_targets, bbox_inside_weights = \
+            self._sample_rois_pytorch(all_rois, gt_boxes, fg_rois_per_image, rois_per_image)
+
+        bbox_outside_weights = bbox_inside_weights.new_zeros(bbox_inside_weights.shape)
+        outside_inds = torch.nonzero(bbox_inside_weights > 0)
+        bbox_outside_weights[outside_inds] = 1
+
+        return rois, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights
+        
 
     def _sample_rois_pytorch(self, all_rois, gt_boxes, fg_rois_per_image, rois_per_image):
         batch_size = all_rois.shape[0]
