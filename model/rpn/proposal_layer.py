@@ -4,10 +4,8 @@ import torch.nn as nn
 from bbox_transform import bbox_transform_inv, clip_boxes
 from generate_anchors import generate_anchors
 from torchvision.ops.boxes import nms
+import model.utils.config as cfg
 
-# NMS_TOP_N = 2000  # will be defined in cfg file
-NMS_TOP_N = 2
-NMS_THRESHOLD = 0.5
 
 class _ProposalLayer(nn.Module):
     def __init__(self, feat_stride, scales, ratios) -> None:
@@ -48,14 +46,14 @@ class _ProposalLayer(nn.Module):
         proposals = clip_boxes(bbox_transform_inv(anchors, bbox_delta, batch_size), img_info, batch_size)
         # print(proposals.shape)
 
-        outputs = proposals.new_zeros((batch_size, NMS_TOP_N, 5))
+        outputs = proposals.new_zeros((batch_size, cfg.TRAIN.RPN_POST_NMS_TOP_N, 5))
         for i in range(batch_size):
             proposal_single = proposals[i]
             score_single = score[i]
-            keep_idx = nms(proposal_single, score[i].squeeze(-1), NMS_THRESHOLD)
+            keep_idx = nms(proposal_single, score[i].squeeze(-1), cfg.TRAIN.RPN_POST_NMS_TOP_N)
 
-            if NMS_TOP_N > 0 and len(keep_idx) > NMS_TOP_N:
-                keep_idx = keep_idx[:NMS_TOP_N]
+            if cfg.TRAIN.RPN_POST_NMS_TOP_N > 0 and len(keep_idx) > cfg.TRAIN.RPN_POST_NMS_TOP_N:
+                keep_idx = keep_idx[:cfg.TRAIN.RPN_POST_NMS_TOP_N]
 
             outputs[i,:,0] = torch.index_select(score_single, 0, keep_idx).squeeze(-1)
             outputs[i,:,1:] = torch.index_select(proposal_single, 0, keep_idx)

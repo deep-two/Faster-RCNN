@@ -6,11 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(
     os.path.abspath(os.path.dirname(__file__))))))
 from model.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
-
-FG_FRACTION = 0.25
-FG_THRESHOLD = 0.5
-BG_THRESH_HI = 0.5
-BG_THRESH_LO = 0.1
+import model.utils.config as cfg
 
 class _ProposalTargetLayer(nn.Module):
     def __init__(self, nclasses) -> None:
@@ -27,7 +23,7 @@ class _ProposalTargetLayer(nn.Module):
         all_rois = torch.concat([rois_in, gt_rois])
 
         rois_per_image = batch_size
-        fg_rois_per_image = int(rois_per_image * FG_FRACTION + 0.5)
+        fg_rois_per_image = int(rois_per_image * cfg.TRAIN.FG_FRACTION + 0.5)
         fg_rois_per_image = 1 if fg_rois_per_image <= 0 else fg_rois_per_image
 
         labels, rois, bbox_targets, bbox_inside_weights = \
@@ -54,10 +50,11 @@ class _ProposalTargetLayer(nn.Module):
         gt_rois_batch = all_rois.new_zeros((batch_size, rois_per_image, 5))
 
         for b in range(batch_size):
-            fg_inds = torch.nonzero(max_iou[b] > FG_THRESHOLD).sqeeze(-1)
+            fg_inds = torch.nonzero(max_iou[b] > cfg.TRAIN.FG_THRESHOLD).sqeeze(-1)
             fg_num_rois = fg_inds.numel()
 
-            bg_inds = torch.nonzero((max_iou[b] < BG_THRESH_HI) & (max_iou[b] >= BG_THRESH_LO)).squeeze(-1)
+            bg_inds = torch.nonzero((max_iou[b] < cfg.TRAIN.BG_THRESH_HI) & 
+                                (max_iou[b] >= cfg.TRAIN.BG_THRESH_LO)).squeeze(-1)
             bg_num_rois = bg_inds.numel()
             
             if fg_num_rois > 0 and bg_num_rois > 0:
