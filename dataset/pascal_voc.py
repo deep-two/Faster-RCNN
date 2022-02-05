@@ -22,7 +22,6 @@ import xml.etree.ElementTree as ET
 import pickle
 from .imdb import imdb
 from .imdb import ROOT_DIR
-from . import ds_utils
 from .voc_eval import voc_eval
 
 # TODO: make fast_rcnn irrelevant
@@ -194,9 +193,9 @@ class pascal_voc(imdb):
         box_list = []
         for i in xrange(raw_data.shape[0]):
             boxes = raw_data[i][:, (1, 0, 3, 2)] - 1
-            keep = ds_utils.unique_boxes(boxes)
+            keep = unique_boxes(boxes)
             boxes = boxes[keep, :]
-            keep = ds_utils.filter_small_boxes(boxes, self.config['min_size'])
+            keep = filter_small_boxes(boxes, self.config['min_size'])
             boxes = boxes[keep, :]
             box_list.append(boxes)
 
@@ -367,6 +366,18 @@ class pascal_voc(imdb):
             self.config['use_salt'] = True
             self.config['cleanup'] = True
 
+def unique_boxes(boxes, scale=1.0):
+  """Return indices of unique boxes."""
+  v = np.array([1, 1e3, 1e6, 1e9])
+  hashes = np.round(boxes * scale).dot(v)
+  _, index = np.unique(hashes, return_index=True)
+  return np.sort(index)
+
+def filter_small_boxes(boxes, min_size):
+  w = boxes[:, 2] - boxes[:, 0]
+  h = boxes[:, 3] - boxes[:, 1]
+  keep = np.where((w >= min_size) & (h > min_size))[0]
+  return keep
 
 if __name__ == '__main__':
     d = pascal_voc('trainval', '2007')
