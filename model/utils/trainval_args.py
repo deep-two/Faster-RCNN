@@ -9,7 +9,7 @@ def parse_args():
                         help='training dataset',
                         default='pascal_voc_2012', type=str)
     parser.add_argument('--net', dest='net',
-                        help='vgg16, res101',
+                        help='res101',
                         default='res101', type=str)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='starting epoch',
@@ -19,7 +19,7 @@ def parse_args():
                         default=20, type=int)
     parser.add_argument('--disp_interval', dest='disp_interval',
                         help='number of iterations to display',
-                        default=100, type=int)
+                        default=1, type=int)
     parser.add_argument('--checkpoint_interval', dest='checkpoint_interval',
                         help='number of iterations to display',
                         default=10000, type=int)

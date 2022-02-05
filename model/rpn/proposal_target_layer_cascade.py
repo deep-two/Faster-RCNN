@@ -1,10 +1,6 @@
 import torch
 import torch.nn as nn
 
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(
-    os.path.abspath(os.path.dirname(__file__))))))
 from model.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
 from model.utils.config import cfg
 
