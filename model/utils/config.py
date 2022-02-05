@@ -263,7 +263,7 @@ __C.RNG_SEED = 3
 __C.EPS = 1e-14
 
 # Root directory of project
-__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..', '..'))
+__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
 
 # Data directory
 __C.DATA_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
@@ -369,7 +369,7 @@ def cfg_from_file(filename):
   """Load a config file and merge it into the default options."""
   import yaml
   with open(filename, 'r') as f:
-    yaml_cfg = edict(yaml.load(f))
+    yaml_cfg = edict(yaml.safe_load(f))
 
   _merge_a_into_b(yaml_cfg, __C)
 
