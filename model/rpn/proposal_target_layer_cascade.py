@@ -7,10 +7,11 @@ from model.utils.config import cfg
 class _ProposalTargetLayer(nn.Module):
     def __init__(self, nclasses) -> None:
         super().__init__()
-        self.BBOX_INSIDE_WEIGHTS = torch.FloatTensor(1)
+        self.BBOX_INSIDE_WEIGHTS = torch.FloatTensor(cfg.TRAIN.BBOX_INSIDE_WEIGHTS)
         self.num_classes = nclasses
 
     def forward(self, rois_in, gt_boxes):
+        self.BBOX_INSIDE_WEIGHTS = self.BBOX_INSIDE_WEIGHTS.type_as(gt_boxes)
         batch_size = gt_boxes.shape[0]
 
         gt_rois = gt_boxes.new_zeros((gt_boxes.shape))
