@@ -16,7 +16,7 @@ class _ProposalTargetLayer(nn.Module):
         gt_rois = gt_boxes.new_zeros((gt_boxes.shape))
         gt_rois[:,:,0] = gt_boxes[:,:,4]
         gt_rois[:,:,1:] = gt_boxes[:,:,:4]
-        all_rois = torch.concat([rois_in, gt_rois], 1)
+        all_rois = torch.cat([rois_in, gt_rois], 1)
 
         rois_per_image = cfg.TRAIN.BATCH_SIZE
         fg_rois_per_image = int(rois_per_image * cfg.TRAIN.FG_FRACTION + 0.5)
@@ -72,7 +72,7 @@ class _ProposalTargetLayer(nn.Module):
             else:
                 raise ValueError("bg_num_rois = 0 and fg_num_rois = 0, this should not happen!")
 
-            keep_inds = torch.concat([fg_inds, bg_inds])
+            keep_inds = torch.cat([fg_inds, bg_inds])
 
             label_batch[b] = labels[b][keep_inds]
             if bg_inds.numel() > 0:

@@ -33,7 +33,7 @@ class _ProposalLayer(nn.Module):
         w = (torch.arange(1,feat_w+1) + torch.arange(0,feat_w)) / 2
         
         x, y = torch.meshgrid(h, w)
-        anchor_center = torch.concat([y.unsqueeze(-1), x.unsqueeze(-1)], dim=-1).repeat(1,1,2 * self.num_anchors_)
+        anchor_center = torch.cat([y.unsqueeze(-1), x.unsqueeze(-1)], dim=-1).repeat(1,1,2 * self.num_anchors_)
         anchor_center = torch.empty_like(bbox_delta).copy_(anchor_center * self.feature_stride_)
   
 
