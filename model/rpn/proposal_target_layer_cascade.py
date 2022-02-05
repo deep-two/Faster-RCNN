@@ -6,7 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(
     os.path.abspath(os.path.dirname(__file__))))))
 from model.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
-import model.utils.config as cfg
+from model.utils.config import cfg
 
 class _ProposalTargetLayer(nn.Module):
     def __init__(self, nclasses) -> None:
@@ -20,9 +20,9 @@ class _ProposalTargetLayer(nn.Module):
         gt_rois = gt_boxes.new_zeros((gt_boxes.shape))
         gt_rois[:,:,0] = gt_boxes[:,:,4]
         gt_rois[:,:,1:] = gt_boxes[:,:,:4]
-        all_rois = torch.concat([rois_in, gt_rois])
+        all_rois = torch.concat([rois_in, gt_rois], 1)
 
-        rois_per_image = batch_size
+        rois_per_image = cfg.TRAIN.BATCH_SIZE
         fg_rois_per_image = int(rois_per_image * cfg.TRAIN.FG_FRACTION + 0.5)
         fg_rois_per_image = 1 if fg_rois_per_image <= 0 else fg_rois_per_image
 
@@ -43,14 +43,14 @@ class _ProposalTargetLayer(nn.Module):
 
         max_iou, matched_gt_idx = torch.max(overlaps, 2)
 
-        labels = gt_boxes[:, :, 4].view(-1).contiguous()
+        labels = gt_boxes[:, matched_gt_idx, 4].view(batch_size, -1).contiguous()
 
         label_batch = labels.new_zeros((batch_size, rois_per_image))
         rois_batch = all_rois.new_zeros((batch_size, rois_per_image, 5))
         gt_rois_batch = all_rois.new_zeros((batch_size, rois_per_image, 5))
 
         for b in range(batch_size):
-            fg_inds = torch.nonzero(max_iou[b] > cfg.TRAIN.FG_THRESHOLD).sqeeze(-1)
+            fg_inds = torch.nonzero(max_iou[b] > cfg.TRAIN.FG_THRESH).squeeze(-1)
             fg_num_rois = fg_inds.numel()
 
             bg_inds = torch.nonzero((max_iou[b] < cfg.TRAIN.BG_THRESH_HI) & 
@@ -104,12 +104,12 @@ class _ProposalTargetLayer(nn.Module):
         roi_per_image = label_batch.shape[1]
 
         bbox_targets = bbox_target_data.new_zeros((batch_size, roi_per_image, 4))
-        bbox_inside_weight = bbox_target_data.new_zeros((batch_size, roi_per_image))
+        bbox_inside_weight = bbox_target_data.new_zeros(bbox_targets.shape)
 
         for b in range(batch_size):
             inds = torch.nonzero(label_batch[b] > 0).squeeze(1)
             bbox_targets[b, inds, :] = bbox_target_data[b, inds, :]
-            bbox_inside_weight[b, inds] = self.BBOX_INSIDE_WEIGHTS
+            bbox_inside_weight[b, inds, :] = self.BBOX_INSIDE_WEIGHTS
 
         return bbox_targets, bbox_inside_weight
 

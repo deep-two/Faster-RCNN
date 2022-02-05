@@ -1,10 +1,10 @@
 import torch
 from torch._C import dtype
 import torch.nn as nn
-from bbox_transform import bbox_transform_inv, clip_boxes
-from generate_anchors import generate_anchors
+from model.rpn.bbox_transform import bbox_transform_inv, clip_boxes
+from model.rpn.generate_anchors import generate_anchors
 from torchvision.ops.boxes import nms
-import model.utils.config as cfg
+from model.utils.config import cfg
 
 
 class _ProposalLayer(nn.Module):
@@ -41,7 +41,7 @@ class _ProposalLayer(nn.Module):
         bbox_delta = bbox_delta.reshape((bbox_delta.shape[0], -1, 4))
 
         anchor_center = anchor_center.reshape((anchor_center.shape[0], -1, 4))
-        anchors = torch.empty_like(bbox_delta).copy_(self.anchors_.unsqueeze(0).repeat(2, feat_h * feat_w,1))
+        anchors = torch.empty_like(bbox_delta).copy_(self.anchors_.unsqueeze(0).repeat(anchor_center.shape[0], feat_h * feat_w,1))
         anchors = anchors + anchor_center
         proposals = clip_boxes(bbox_transform_inv(anchors, bbox_delta, batch_size), img_info, batch_size)
         # print(proposals.shape)
