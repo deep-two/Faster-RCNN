@@ -27,8 +27,7 @@ class _ProposalTargetLayer(nn.Module):
             self._sample_rois_pytorch(all_rois, gt_boxes, fg_rois_per_image, rois_per_image)
 
         bbox_outside_weights = bbox_inside_weights.new_zeros(bbox_inside_weights.shape)
-        outside_inds = torch.nonzero(bbox_inside_weights > 0)
-        bbox_outside_weights[outside_inds] = 1
+        bbox_outside_weights = (bbox_inside_weights > 0).float()
 
         return rois, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights
         
