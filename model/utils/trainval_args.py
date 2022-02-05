@@ -16,10 +16,10 @@ def parse_args():
                         default=1, type=int)
     parser.add_argument('--epochs', dest='max_epochs',
                         help='number of epochs to train',
-                        default=20, type=int)
+                        default=5, type=int)
     parser.add_argument('--disp_interval', dest='disp_interval',
                         help='number of iterations to display',
-                        default=1, type=int)
+                        default=100, type=int)
     parser.add_argument('--checkpoint_interval', dest='checkpoint_interval',
                         help='number of iterations to display',
                         default=10000, type=int)
@@ -32,7 +32,7 @@ def parse_args():
                         default=0, type=int)
     parser.add_argument('--cuda', dest='cuda',
                         help='whether use CUDA',
-                        action='store_true', default=True)
+                        action='store_true')
     parser.add_argument('--ls', dest='large_scale',
                         help='whether use large imag scale',
                         action='store_true')                      
@@ -41,7 +41,7 @@ def parse_args():
                         action='store_true')
     parser.add_argument('--bs', dest='batch_size',
                         help='batch_size',
-                        default=8, type=int)
+                        default=32, type=int)
     parser.add_argument('--cag', dest='class_agnostic',
                         help='whether perform class_agnostic bbox regression',
                         action='store_true')

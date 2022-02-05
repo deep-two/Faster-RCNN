@@ -10,6 +10,8 @@ from model.faster_rcnn.resnet import resnet
 from model.utils.config import cfg, cfg_from_file, cfg_from_list
 from model.utils.trainval_args import parse_args
 
+# torch.backends.cudnn.enabled = False
+
 def train(args):
     if args.dataset == "pascal_voc":
         args.imdb_name = "voc_2007_trainval"
@@ -38,8 +40,6 @@ def train(args):
                             sampler=sampler_batch, num_workers=args.num_workers)
 
     output_dir = args.save_dir + "/" + args.net + "/" + args.dataset
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     model = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic) 
     model.create_architecture()
@@ -79,6 +79,12 @@ def train(args):
         model.train()
         loss_temp = 0
         iters_per_epoch = len(dataloader)
+
+        if epoch % (args.lr_decay_step) == 0:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = args.lr_decay_gamma * param_group['lr']
+            lr *= args.lr_decay_gamma
+
         for step, data in enumerate(dataloader):
             im_data = data[0]
             im_info = data[1]
@@ -105,6 +111,11 @@ def train(args):
             loss.backward()
             optimizer.step()
 
+            if epoch % (args.disp_interval * 10) == 0:
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = (args.lr_decay_gamma * 7) * param_group['lr']
+                lr *= (args.lr_decay_gamma * 7)
+
             if step % args.disp_interval == 0:
                 if step > 0:
                     loss_temp /= (args.disp_interval + 1)
@@ -123,6 +134,8 @@ def train(args):
 
                 loss_temp = 0
 
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     save_name = os.path.join(output_dir, 'faster_rcnn_{}_{}_{}.pth'.format(args.session, epoch, step))
     torch.save({
       'session': args.session,
