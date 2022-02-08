@@ -33,6 +33,7 @@ wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
  tar -xvf VOCtrainval_11-May-2012.tar
  ```
 3. Data dir should like this
+```
    VOCDevKit
         |-- VOC2012
                 |-- Annotations
@@ -44,6 +45,7 @@ wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
                         |-- Segmentation
                 |-- JPEGImages
                         |-- [xxxxxxxxxxxx].jpg
+```
 
 ## 3. Train
 ```bash
