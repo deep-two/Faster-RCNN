@@ -1,13 +1,14 @@
 EXP_DIR: res101
+# you'd better not change batchsize. it is used to get number of rois per image
 TRAIN:
   HAS_RPN: True
   BBOX_NORMALIZE_TARGETS_PRECOMPUTED: True
   RPN_POSITIVE_OVERLAP: 0.7
-  RPN_BATCHSIZE: 1
+  RPN_BATCHSIZE: 256
   PROPOSAL_METHOD: gt
   BG_THRESH_LO: 0.0
   DISPLAY: 20
-  BATCH_SIZE: 1 
+  BATCH_SIZE: 128
   WEIGHT_DECAY: 0.0001
   DOUBLE_BIAS: False
   LEARNING_RATE: 0.001
