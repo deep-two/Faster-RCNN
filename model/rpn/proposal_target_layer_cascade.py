@@ -55,11 +55,13 @@ class _ProposalTargetLayer(nn.Module):
             
             if fg_num_rois > 0 and bg_num_rois > 0:
                 fg_rois_limit = min(fg_num_rois, fg_rois_per_image)
-                rand_idx = torch.randint(0, fg_num_rois, (fg_rois_limit,))
+                # rand_idx = torch.randint(0, fg_num_rois, (fg_rois_limit,))
+                rand_idx = torch.randperm(fg_num_rois)[:fg_rois_limit]
                 fg_inds = fg_inds[rand_idx]
 
                 bg_rois_limit = min(bg_num_rois, rois_per_image - fg_rois_limit)
-                rand_idx = torch.randint(0, bg_num_rois, (bg_rois_limit,))
+                # rand_idx = torch.randint(0, bg_num_rois, (bg_rois_limit,))
+                rand_idx = torch.randperm(bg_num_rois)[:bg_rois_limit]
                 bg_inds = bg_inds[rand_idx]
             elif fg_num_rois > 0:
                 fg_rois_limit = min(fg_num_rois, rois_per_image)
@@ -74,14 +76,14 @@ class _ProposalTargetLayer(nn.Module):
 
             keep_inds = torch.cat([fg_inds, bg_inds])
 
-            label_batch[b] = labels[b][keep_inds]
+            label_batch[b][:len(keep_inds)] = labels[b][keep_inds]
             if bg_inds.numel() > 0:
                 label_batch[b, fg_inds.numel():] = 0
 
-            rois_batch[b] = all_rois[b][keep_inds]
-            rois_batch[b,:,0] = b
+            rois_batch[b][:len(keep_inds)] = all_rois[b][keep_inds]
+            rois_batch[b,:,0][:len(keep_inds)] = b
 
-            gt_rois_batch[b] = gt_boxes[b][matched_gt_idx[b][keep_inds]]
+            gt_rois_batch[b][:len(keep_inds)] = gt_boxes[b][matched_gt_idx[b][keep_inds]]
 
         bbox_target_data = self._compute_targets_pytorch(rois_batch[:,:,1:], gt_rois_batch[:,:,:4])
 
