@@ -10,8 +10,6 @@ from model.faster_rcnn.resnet import resnet
 from model.utils.config import cfg, cfg_from_file, cfg_from_list
 from model.utils.trainval_args import parse_args
 
-# torch.backends.cudnn.enabled = False
-
 def train(args):
     if args.dataset == "pascal_voc":
         args.imdb_name = "voc_2007_trainval"
